@@ -16,6 +16,14 @@
 
 package com.android.inputmethod.latin;
 
+import java.io.File;
+import java.io.FileDescriptor;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
+
+import algs.model.IMultiPoint;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -24,6 +32,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.PointF;
 import android.inputmethodservice.InputMethodService;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
@@ -41,6 +50,7 @@ import android.util.Log;
 import android.util.PrintWriterPrinter;
 import android.util.Printer;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -49,16 +59,11 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
 
-import java.io.FileDescriptor;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Input method implementation for Qwerty'ish keyboard.
  */
 public class LatinIME extends InputMethodService 
-        implements KeyboardView.OnKeyboardActionListener {
+        implements KeyboardView.OnKeyboardActionListener, View.OnTouchListener {
     static final boolean DEBUG = false;
     static final boolean TRACE = false;
     
@@ -102,6 +107,7 @@ public class LatinIME extends InputMethodService
     
     KeyboardSwitcher mKeyboardSwitcher;
     
+    private SlideDictionary slideDictionary;
     private UserDictionary mUserDictionary;
     private ContactsDictionary mContactsDictionary;
     private ExpandableDictionary mAutoDictionary;
@@ -189,6 +195,15 @@ public class LatinIME extends InputMethodService
         mLocale = locale;
         mSuggest = new Suggest(this, R.raw.main);
         mSuggest.setCorrectionMode(mCorrectionMode);
+        List<IMultiPoint> wordsAsPoints = new ArrayList<IMultiPoint>();
+        // fill wordsAsPoints with HyperPoints
+        try {
+            Log.i("LatinIME", "about to load slidedict");
+            slideDictionary = new SlideDictionary(new File("/sdcard/slidedict"));
+            Log.i("LatinIME", "loaded slidedict");
+        } catch (IOException e) {
+            // slide dictionary will not be available
+        }
         mUserDictionary = new UserDictionary(this);
         mContactsDictionary = new ContactsDictionary(this);
         mAutoDictionary = new AutoDictionary(this);
@@ -230,6 +245,7 @@ public class LatinIME extends InputMethodService
         mKeyboardSwitcher.setInputView(mInputView);
         mKeyboardSwitcher.makeKeyboards(true);
         mInputView.setOnKeyboardActionListener(this);
+        mInputView.setOnTouchListener(this);
         mKeyboardSwitcher.setKeyboardMode(KeyboardSwitcher.MODE_TEXT, 0);
         return mInputView;
     }
@@ -1206,7 +1222,50 @@ public class LatinIME extends InputMethodService
             }
         }
     }
+    
+    private List<PointF> pressedPoints = new ArrayList<PointF>();
+
+    public boolean onTouch(View v, MotionEvent me) {
+        if (me.getAction() == MotionEvent.ACTION_MOVE){
+            pressedPoints.add(new PointF(me.getX(), me.getY()));
+            return false;
+        }
+        
+        if (me.getAction() == MotionEvent.ACTION_UP) {
+            
+            Log.w("LatinIME", "action up detected, # points = " + pressedPoints.size());
+            Log.i("LatinIME", "action up detected, # points = " + pressedPoints.size());
+            if (pressedPoints.size() > 10) {
+                // TODO: use polygon length rather
+                //than the number of inputs.
+                double[]x = new double[pressedPoints.size()];
+                double[]y = new double[pressedPoints.size()];
+                
+                float xmin = pressedPoints.get(0).x;
+                float xmax = pressedPoints.get(0).x;
+                float ymin = pressedPoints.get(0).y;
+                float ymax = pressedPoints.get(0).y;
+                for (PointF p: pressedPoints) {
+                    if (xmin > p.x) xmin = p.x;
+                    if (xmax < p.x) xmax = p.x;
+                    if (ymin > p.y) ymin = p.y;
+                    if (ymax < p.y) ymax = p.y; 
+                }
+                Log.i("LatinIME", "x range: " + xmin + " - " + xmax);
+                Log.i("LatinIME", "y range: " + ymin + " - " + ymax);
+                
+                // slidedictionary is based on a 100 x 30 keyboard
+                for (int i = 0; i < pressedPoints.size(); i++) {
+                    x[i] = pressedPoints.get(i).x * 100 / 320;
+                    y[i] = pressedPoints.get(i).y * 30 / 160;
+                }
+                String word = slideDictionary.getWordSuggestion(x, y);
+                getCurrentInputConnection().commitText(word, 0);
+            }
+            pressedPoints.clear();
+        }
+        return false;
+        
+    }
+
 }
-
-
-

@@ -1,0 +1,34 @@
+<kbd keyWidth="10" keyHeight="10">
+  <row offset="0">
+    <key char="q"/>
+    <key char="w"/>
+    <key char="e"/>
+    <key char="r"/>
+    <key char="t"/>
+    <key char="y"/>
+    <key char="u"/>
+    <key char="i"/>
+    <key char="o"/>
+    <key char="p"/>
+  </row>
+  <row offset="4">
+    <key char="a"/>
+    <key char="s"/>
+    <key char="d"/>
+    <key char="f"/>
+    <key char="g"/>
+    <key char="h"/>
+    <key char="j"/>
+    <key char="k"/>
+    <key char="l"/>
+  </row>
+  <row offset="8">
+    <key char="z"/>
+    <key char="x"/>
+    <key char="c"/>
+    <key char="v"/>
+    <key char="b"/>
+    <key char="n"/>
+    <key char="m"/>
+  </row>
+</kbd>

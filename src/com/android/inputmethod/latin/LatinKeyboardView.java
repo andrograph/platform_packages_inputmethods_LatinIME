@@ -16,20 +16,21 @@
 
 package com.android.inputmethod.latin;
 
+import java.util.List;
+
 import android.content.Context;
 import android.graphics.Canvas;
 import android.inputmethodservice.Keyboard;
-import android.inputmethodservice.KeyboardView;
 import android.inputmethodservice.Keyboard.Key;
+import android.inputmethodservice.KeyboardView;
 import android.os.Handler;
 import android.os.Message;
 import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 
-import java.util.List;
-
 public class LatinKeyboardView extends KeyboardView {
+    
 
     static final int KEYCODE_OPTIONS = -100;
     static final int KEYCODE_SHIFT_LONGPRESS = -101;
@@ -177,4 +178,5 @@ public class LatinKeyboardView extends KeyboardView {
             }
         }
     }
+    
 }

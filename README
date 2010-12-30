@@ -1,0 +1,25 @@
+Usage:
+
+1. Download a frequency list and massage it into a valid dictionary xml file. Put it under dictionaries/
+
+More details:
+
+- go to http://corpora.uni-leipzig.de/download.html
+- fill in the captcha and download one of the plain text files (samples here based on nl100k.zip)
+
+unzip nl100k.zip
+# sort the words by frequency (descending), create a wordlist out of it
+sort -r -n -k3 nl100k/words.txt|head -n 10000|grep -v -P '\t[^a-zA-Z]*\t' |awk 'BEGIN{print "<wordlist>"}{print "<w f=\""$3"\">"$2"</w>"}END{print"</wordlist>"}'
+
+2.  Create a keyboard file. (Ideally the keyboard file would not be necessary, it should simply match the on-screen keyboard). There is a sample keyboard file under keyboards/querty.xml.
+
+3. Build everything
+
+(run make)
+
+4. Create a 'slide index file' for your dictionary and keyboard:
+../../../development/tools/makeslideindex keyboards/qwerty.xml dictionaries/dutch.xml > mydict.slide
+
+5. Create an AVD, create an sd card image, run the emulator with the sd card image attached, push your slide index file to /sdcard/slidedict
+
+6. Draw some words using slide gestures.
